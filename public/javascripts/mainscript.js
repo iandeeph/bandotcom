@@ -196,7 +196,6 @@ $(document).ready(function() {
         $('input[id^=trxKode]').change(function(){
             var value = $(this).val();
             var parentTr = $(this).closest('tr');
-            var paretnTable = $(this).closest('table');
             $.ajax({
                 url: './sending-content-by-name?name='+encodeURIComponent(value),
                 type: "GET",
@@ -208,7 +207,6 @@ $(document).ready(function() {
                         var jenis = datas[0].jenis;
                         var deskripsi = datas[0].deskripsi;
                         var hargaJual = datas[0].hargajual || 0 ;
-                    console.log(datas[0].hargajual);
                         var detailText = nama +" || "+ merek +" || "+ jenis +" \n"+ deskripsi +"";
                         $(parentTr).find('pre[id^=detailTrx]').text(detailText);
                         $(parentTr).find('span[id^=spanHarga]').text(Intl.NumberFormat('en-IND').format(parseInt(hargaJual)));
@@ -219,7 +217,7 @@ $(document).ready(function() {
                         $(parentTr).find('input[id^=trxJumlah]').attr('disabled',false);
                         $(parentTr).find('input[id^=trxJumlah]').removeClass('disabled');
                         $(parentTr).closest('form').find('#trxSubmit').attr('disabled',false);
-                        $(parentTr).closest('form').find('#trxSubmit]').removeClass('disabled');
+                        $(parentTr).closest('form').find('#trxSubmit').removeClass('disabled');
                     }else{
                         $(parentTr).find('pre[id^=detailTrx]').text("");
                         $(parentTr).find('span[id^=spanHarga]').text("");
@@ -230,6 +228,24 @@ $(document).ready(function() {
                         $(parentTr).closest('form').find('#trxSubmit').attr('disabled',true);
                         $(parentTr).closest('form').find('#trxSubmit').addClass('disabled');
                     }
+
+                    $('input[id^=trxJumlah]').bind("keyup change", function(){
+                        var parentTr = $(this).closest('tr');
+                        var parentTable = $(this).closest('table');
+                        var jumlah = ($(this).val() > 0)?parseInt($(this).val()) : 0;
+                        var harga = parseInt($(parentTr).find('span[id^=spanHarga]').text().replace(/[^0-9]/gi, ''));
+                        //var harga = $(parentTr).find('span[id^=spanHarga]').text();
+                        $(parentTr).find('span[id^=spanTotal]').text((Intl.NumberFormat('en-IND').format(jumlah*harga)));
+
+                        var sumTotal = 0;
+                        var ongkos = parseInt($("#trxOngkos").val().replace(/[^0-9]/gi, '')) || 0;
+                        var other = parseInt($("#trxLain").val().replace(/[^0-9]/gi, '')) || 0;
+                        $(parentTable).find('span[id^=spanTotal]').each(function(){
+                            sumTotal += (parseInt($(this).text().replace(/[^0-9]/gi, ''))) << 0;
+                        });
+
+                        $("#spanGrandTotal").text(Intl.NumberFormat('en-IND').format((sumTotal+ongkos+other)));
+                    });
                 }
             })
         });
@@ -264,9 +280,9 @@ $(document).ready(function() {
                     '<tr class="bordered addedRow'+ numFieldTrx +'">' +
                     '<td><input class="inputListGroup autocompleteTrx'+ numFieldTrx +'" id="trxKode-'+ numFieldTrx +'" name="listTrx['+ numFieldTrx +'][kode]" type="text"></td>' +
                     '<td><pre id="detailTrx'+ numFieldTrx +'" class="mt-0"></pre></td>' +
-                    '<td><input class="inputListGroup" id="trxJumlah-'+ numFieldTrx +'" name="listTrx['+ numFieldTrx +'][jumlah]" type="number" required></td>' +
+                    '<td><input class="center-align inputListGroup" id="trxJumlah-'+ numFieldTrx +'" name="listTrx['+ numFieldTrx +'][jumlah]" type="number" required></td>' +
                     '<td class="center-align"><span id="spanHarga'+ numFieldTrx +'"></span></td>' +
-                    '<td><span id="spanTotal'+ numFieldTrx +'"> </span></td>' +
+                    '<td class="right-align"><span id="spanTotal'+ numFieldTrx +'"> </span></td>' +
                     '<td class="center"><a class="btn-floating btn waves-effect waves-light red darken-3" name="btnRemRow-'+ numFieldTrx +'" id="'+ numFieldTrx +'" title="Hapus Baris"><i class="material-icons">remove</i></a></td>' +
                     '</tr>' +
                     '';
@@ -290,6 +306,22 @@ $(document).ready(function() {
                 });
                 trxPageFunc();
             }
+        });
+    });
+
+    $('#trxOngkos, #trxLain').each(function(){
+        $(this).bind("keyup change",function(){
+            var number = ($(this).val() != '' && $(this).val() != 'NaN') ? parseInt($(this).val().replace(/[^0-9]/gi, '')) : 0;
+            $(this).val(Intl.NumberFormat('en-IND').format(number));
+
+            var sumTotal = 0;
+            var ongkos = parseInt($("#trxOngkos").val().replace(/[^0-9]/gi, '')) || 0;
+            var other = parseInt($("#trxLain").val().replace(/[^0-9]/gi, '')) || 0;
+            $("#trxBlock").find('span[id^=spanTotal]').each(function(){
+                sumTotal += (parseInt($(this).text().replace(/[^0-9]/gi, ''))) << 0;
+            });
+
+            $("#spanGrandTotal").text(Intl.NumberFormat('en-IND').format((sumTotal+ongkos+other)));
         });
     });
     //================ page add-code end ==================
