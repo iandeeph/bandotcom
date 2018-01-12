@@ -31,6 +31,17 @@ exports.numbyIndex = function (index) {
     return parse;
 };
 
+exports.indexOf = function (object, key) {
+    var parse;
+    var arr = _.toArray(object);
+    console.log(object);
+    console.log(key);
+    console.log(_.indexOf(arr, key));
+    parse = (parseInt(_.indexOf(object, key)) + 1);
+
+    return parse;
+};
+
 exports.section = function(name, options){
     if(!this._sections) this._sections = {};
     this._sections[name] = options.fn(this);
@@ -103,4 +114,11 @@ exports.toTimes = function (number, number2) {
         parse = Intl.NumberFormat('en-IND').format(tmpNum);
     }
     return parse;
+};
+
+exports.maxKey = function (object) {
+    var maxKey;
+    maxKey = (_.keys(object).length + 1);
+    //maxKey = _.keys(object).length;
+    return maxKey;
 };

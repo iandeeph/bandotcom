@@ -1,0 +1,65 @@
+{{#section 'title'}}
+    Laporan Penjualan
+{{/section}}
+{{error}}
+
+<div class="row almost-full">
+    <div class="col s12 mt-20">
+        <div class="col s12 mb-20 mt-20 center">
+            <span class="font-40">Laporan Penjualan</span>
+        </div>
+        <div class="col s12">
+            <span class="font-20 {{message.color}}-text" id="message">{{message.text}}</span>
+        </div>
+        <div class="row">
+            <form action="" method="post">
+                <div class="col s12 almost-full">
+                    <div class="home-table row">
+                        <table class="bordered">
+                            <thead>
+                            <tr class="border-bottom">
+                                <th width="1%">No</th>
+                                <th width="3%">Order ID</th>
+                                <th width="8%">Tanggal</th>
+                                <th width="8%">Kode Barang</th>
+                                <th width="5%">Merek</th>
+                                <th width="5%">Jenis</th>
+                                <th width="8%">Nama Barang</th>
+                                <th width="13%">Deskripsi Barang</th>
+                                <th width="5%">Harga Jual</th>
+                                <th width="1%">Jumlah</th>
+                                <th width="3%">Total</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {{#each template}}
+                                <tr>
+                                    <td rowspan="{{maxKey this}}">{{numbyIndex @index}}</td>
+                                    <td rowspan="{{maxKey this}}">{{@key}}</td>
+                                    <td rowspan="{{maxKey this}}">{{dateTime this.0.tanggal}}</td>
+                                </tr>
+                                    {{#each this}}
+                                        <tr>
+                                            <td>{{this.kode}}</td>
+                                            <td>{{this.merek}}</td>
+                                            <td>{{this.jenis}}</td>
+                                            <td>{{this.nama}}</td>
+                                            <td>{{this.deskripsi}}</td>
+                                            <td>{{numberFormat this.hargabeli}}</td>
+                                            <td class="center-align">{{zeroOrNumber this.jumlah}}</td>
+                                            <td class="right-align">{{numberFormat this.total}}</td>
+                                        </tr>
+                                    {{/each}}
+                            {{/each}}
+                                <tr>
+                                    <td class="right-align" colspan="10">Total</td>
+                                    <td class="right-align">{{numberFormat grandTotal}}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

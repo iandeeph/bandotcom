@@ -8,7 +8,7 @@
         <div class="col s12 mb-20 mt-20 center">
             <span class="font-40">Transaksi</span>
         </div>
-        <div class="col s12">
+        <div class="col s12 mb-10">
             <span class="font-20 {{message.color}}-text" id="message">{{message.text}}</span>
         </div>
         <div class="row">
@@ -28,7 +28,7 @@
                             </thead>
                             <tbody id="trxBlock">
                             <tr class="bordered">
-                                <td><input class="inputListGroup autocompleteTrx" id="trxKode-1" name="listTrx[1][kode]" type="text"></td>
+                                <td><input class="inputListGroup autocompleteTrx" id="trxKode-1" name="listTrx[1][kode]" type="text" required></td>
                                 <td>
                                     <pre id="detailTrx0" class="mt-0">
 
@@ -53,15 +53,19 @@
                                 <td colspan="4" class="right-align">
                                     <span>Ongkos</span>
                                 </td>
-                                <td class="right-align"><input class="inputListGroup input-short right-align" id="trxOngkos" name="listTrx[1][ongkos]" type="text"></td>
+                                <td class="right-align"><input class="inputListGroup input-short right-align" id="trxOngkos" name="other[ongkos]" type="text"></td>
 
-                                <td rowspan="3"><button type="submit" name="trxSubmit" id="trxSubmit" class="waves-effect waves-light btn-large orange darken-3 right">Submit</button></td>
+                                <td rowspan="3">
+                                    <button type="submit" name="trxSubmit" id="trxSubmit" class="waves-effect waves-light btn-large orange darken-3">
+                                        Cetak
+                                    </button>
+                                </td>
                             </tr>
                             <tr class="bordered">
                                 <td colspan="4" class="right-align">
                                     <span>Biaya Lain-lain</span>
                                 </td>
-                                <td class="right-align"><input class="inputListGroup input-short right-align" id="trxLain" name="listTrx[1][lain]" type="text"></td>
+                                <td class="right-align"><input class="inputListGroup input-short right-align" id="trxLain" name="other[lain]" type="text"></td>
                             </tr>
                             <tr class="bordered">
                                 <td colspan="4" class="right-align">

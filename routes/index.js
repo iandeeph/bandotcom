@@ -1,9 +1,10 @@
-var express = require('express');
-var router = express.Router();
-var _ = require('lodash');
-var mysql = require('promise-mysql');
-var Promise = require('bluebird');
-var moment = require('moment');
+var express     = require('express');
+var router      = express.Router();
+var _           = require('lodash');
+var mysql       = require('promise-mysql');
+var Promise     = require('bluebird');
+var moment      = require('moment');
+var randomize   = require('randomatic');
 
 //source : http://stackoverflow.com/questions/20210522/nodejs-mysql-error-connection-lost-the-server-closed-the-connection
 var db_config = {
@@ -17,7 +18,9 @@ var db_config = {
 var bandotcomConn;
 
 function handleDisconnect() {
-    bandotcomConn = mysql.createPool(db_config); // Recreate the connection, since
+    bandotcomConn = mysql.createPool(db_config,{
+        multipleStatements: true //for multiple update. Source : https://stackoverflow.com/questions/25552115/updating-multiple-rows-with-node-mysql-nodejs-and-q
+    }); // Recreate the connection, since
     // the old one cannot be reused.
 
     bandotcomConn.getConnection(function(err) {              // The server is either down
@@ -41,7 +44,98 @@ handleDisconnect();
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
-    res.render('index');
+    var passedVariable = req.query.respost;
+    var message = {"text":"","color":""};
+    switch (passedVariable){
+        case '1':
+            message = {"text":"Transaksi Berhasil..", "color":"green"};
+            break;
+        case '2':
+            message = {"text":"Transaksi Gagal..!!", "color":"red"};
+            break;
+        default :
+            message = {"text":"","color":""};
+            break;
+    }
+    res.render('index',{
+        message : message
+    });
+});
+
+/* POST home page. */
+router.post('/', function(req, res, next) {
+    var dateNow = moment(Date.now()).format("YYYY-MM-DD HH:mm:ss");
+    var lists = Array.prototype.slice.call(req.body.listTrx);
+    var other = req.body.other;
+    var user = "";
+    var orderid = randomize('?Aa0',10,dateNow);
+    var newStock = 0;
+
+    var arrayTrxQuery = [];
+    var arrayLogQuery = [];
+
+    var queryStr = "select * from tb_kode " +
+        "LEFT JOIN tb_item ON tb_kode.idkode = tb_item.idkode " +
+        "order by tb_kode.kode";
+    return bandotcomConn.query(queryStr)
+        .then(function(rowItem) {
+            return Promise.each(lists, function (listStock) {
+                var cekKodePromise = new Promise(function (resolve, reject) {
+                    resolve(_.find(rowItem, {'kode' : listStock.kode}));
+                });
+                cekKodePromise.then(function(resRows) {
+                    //`db_bandotcom`.`tb_trx` (`orderid`, `idkode`, `hargabeli`, `hargajual`, `tanggal`, `jenistrx`, `jumlah`, `ongkos`, `lain`)
+                    //`db_bandotcom`.`tb_log` (`user`, `aksi`, `detail`, `tanggal`)
+                    newStock = (parseInt(resRows.jumlah) - listStock.jumlah);
+                    var logString = "Order ID : "+ orderid +"\n" +
+                        "ID Kode : "+ resRows.idkode +"\n" +
+                        "Kode Barang : "+ resRows.kode +"\n" +
+                        "Merek Barang : "+ resRows.merek +"\n" +
+                        "Nama Barang : "+ resRows.nama +"\n" +
+                        "Jenis Barang : "+ resRows.jenis +"\n" +
+                        "Deskripsi Barang : "+ resRows.deskripsi +"\n" +
+                        "Catatan Barang : "+ resRows.catatan +"\n" +
+                        "Harga Jual : "+ resRows.hargajual +"\n" +
+                        "Jumlah : "+ listStock.jumlah +"\n" +
+                        "Ongkos : "+ parseInt(other.ongkos.replace(/[^0-9]/gi, '')) +"\n" +
+                        "Biaya Lain : "+ parseInt(other.lain.replace(/[^0-9]/gi, ''));
+                    arrayLogQuery.push([user, "Transaksi Kasir", logString, dateNow]);
+                    arrayTrxQuery.push([orderid, resRows.idkode, resRows.hargabeli, resRows.hargajual, dateNow, '2', listStock.jumlah, parseInt(other.ongkos.replace(/[^0-9]/gi, '')), parseInt(other.lain.replace(/[^0-9]/gi, ''))]);
+
+                    var queryItemString = "UPDATE db_bandotcom.tb_item SET " +
+                        "jumlah = '"+ newStock  +"' " +
+                        "where idkode = '"+ resRows.idkode +"' ";
+                    return bandotcomConn.query(queryItemString)
+                        .then(function() {
+                        }).catch(function (error) {
+                            //logs out the error
+                            console.error(error);
+                            var string = encodeURIComponent("2");
+                            res.redirect('/?respost='+ string);
+                        });
+                });
+            }).then(function () {
+                Promise.all([arrayLogQuery, arrayTrxQuery])
+                    .then(function () {
+                        var queryTrxString = "INSERT INTO db_bandotcom.tb_trx (orderid, idkode, hargabeli, hargajual, tanggal, jenistrx, jumlah, ongkos, lain) VALUES?";
+                        var queryLogString = "INSERT INTO db_bandotcom.tb_log (user, aksi, detail, tanggal) VALUES?";
+
+                        var pushTrx = bandotcomConn.query(queryTrxString, [arrayTrxQuery]);
+                        var pushLog = bandotcomConn.query(queryLogString, [arrayLogQuery]);
+
+                        Promise.all([pushTrx, pushLog])
+                            .then(function (results) {
+                                var string = encodeURIComponent("1");
+                                res.redirect('/?respost='+ string);
+                            }).catch(function (error) {
+                                //logs out the error
+                                console.error(error);
+                                var string = encodeURIComponent("2");
+                                res.redirect('/?respost='+ string);
+                            });
+                    });
+            });
+        });
 });
 
 /* GET add-code page. */
@@ -64,7 +158,6 @@ router.get('/add-code', function(req, res, next) {
     });
 });
 
-
 /* POST add-code page. */
 router.post('/add-code', function(req, res, next) {
     var dateNow = moment(Date.now()).format("YYYY-MM-DD HH:mm:ss");
@@ -80,7 +173,7 @@ router.post('/add-code', function(req, res, next) {
         return Promise.each(lists, function (listStock) {
             //`db_bandotcom`.`tb_kode` (`idkode`, `kode`, `nama`, `merek`, `jenis`, `deskripsi`, `catatan`)
             var maxIdCode = (parseInt(maxId[0].maxid) + num);
-            console.log(maxIdCode);
+            //console.log(maxIdCode);
             arrayKodeQuery.push([maxIdCode, listStock.kode, listStock.nama, listStock.merek, listStock.jenis, listStock.deskripsi, listStock.catatan]);
             arrayItemQuery.push([maxIdCode, "0"]);
 
@@ -90,7 +183,7 @@ router.post('/add-code', function(req, res, next) {
                 "Nama Barang : "+ listStock.nama +"\n" +
                 "Jenis Barang : "+ listStock.jenis +"\n" +
                 "Deskripsi Barang : "+ listStock.deskripsi +"\n" +
-                "Catatan Barang : "+ listStock.catatan +"\n";
+                "Catatan Barang : "+ listStock.catatan;
 
             arrayLogQuery.push([user, "Tambah Jenis Barang", logString, dateNow]);
             num++;
@@ -259,7 +352,7 @@ router.post('/add-stock', function(req, res, next) {
                         logString = "Kode Barang : "+ listStock.kode +"\n" +
                             "Harga Beli : "+ hargaBeli +"\n" +
                             "Harga Jual : "+ hargaJual +"\n" +
-                            "Jumlah : "+ jumlah +"\n";
+                            "Jumlah : "+ jumlah;
 
                         queryLogString = "INSERT INTO db_bandotcom.tb_log (user, aksi, detail, tanggal) VALUES " +
                             "('"+ user +"', 'Tambah Stock','"+ logString +"','"+ dateNow +"')";
@@ -298,7 +391,7 @@ router.post('/add-stock', function(req, res, next) {
                                 logString = "Kode Barang : "+ listStock.kode +"\n" +
                                     "Harga Beli : "+ hargaBeli +"\n" +
                                     "Harga Jual : "+ hargaJual +"\n" +
-                                    "Jumlah : "+ jumlah +"\n";
+                                    "Jumlah : "+ jumlah;
 
                                 queryLogString = "INSERT INTO db_bandotcom.tb_log (user, aksi, detail, tanggal) VALUES " +
                                     "('"+ user +"', 'Tambah Stock','"+ logString +"','"+ dateNow +"')";
@@ -340,7 +433,7 @@ router.post('/add-stock', function(req, res, next) {
                                         "Catatan Barang : "+ listStock.catatan +"\n" +
                                         "Harga Beli : "+ hargaBeli +"\n" +
                                         "Harga Jual : "+ hargaJual +"\n" +
-                                        "Jumlah : "+ jumlah +"\n";
+                                        "Jumlah : "+ jumlah;
 
                                     queryLogString = "INSERT INTO db_bandotcom.tb_log (user, aksi, detail, tanggal) VALUES " +
                                         "('"+ user +"', 'Tambah Stock Jenis Baru','"+ logString +"','"+ dateNow +"')";
@@ -403,6 +496,57 @@ router.get('/trxin-report', function(req, res, next) {
             //logs out the error
             console.error(error);
         });
+});
+
+/* GET trx-out page. */
+router.get('/trxout-report', function(req, res, next) {
+    var template = {};
+    bandotcomConn.query("select *, (hargajual*jumlah) total from tb_trx " +
+        "LEFT JOIN tb_kode ON tb_trx.idkode = tb_kode.idkode " +
+        "where jenistrx = '2' " +
+        "order by tb_kode.kode")
+        .then(function(rowItem) {
+            var groupedOrderid = _.groupBy(rowItem,'orderid');
+            var arrOrderid = _.values(groupedOrderid);
+
+            //Object.keys(groupedOrderid).forEach(function (key) {
+            //    template[orderid.orderid] = [];
+            //        console.log(key);
+            //});
+            //return Promise.each(arrOrderid, function (orderid) {
+            //    var cekOrderid = new Promise(function (resolve, reject) {
+            //        resolve(_.find(rowItem, {'orderid' : orderid.orderid}));
+            //    });
+            //
+            //    cekOrderid.then(function(resRows) {
+            //        template[orderid][resRow[0].tanggal] = [];
+            //        return Promise.each(resRows, function (row) {
+            //            template[row.orderid][row.tanggal].push({
+            //                "kode" : row.kode,
+            //                "merek" : row.merek,
+            //                "nama" : row.nama,
+            //                "jenis" : row.jenis,
+            //                "deskripsi" : row.deskripsi,
+            //                "catatan" : row.catatan,
+            //                "hargajual" : row.hargajual,
+            //                "Jumlah" : row.jumlah,
+            //                "Total" : row.total
+            //            });
+            //
+            //        });
+            //    });
+            //}).then(function(rowItem) {
+                res.render('trxout-report',{
+                    template : groupedOrderid,
+                    rows : rowItem,
+                    grandTotal : _.sumBy(rowItem, 'total')
+                });
+
+            }).catch(function (error) {
+                //logs out the error
+                console.error(error);
+            });
+        //});
 });
 
 /* GET log page. */

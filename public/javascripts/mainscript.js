@@ -202,11 +202,13 @@ $(document).ready(function() {
                 dataType: "json",
                 success: function (datas) {
                     if(datas.length != 0){
+                        var kode = datas[0].kode;
                         var nama = datas[0].nama;
                         var merek = datas[0].merek;
                         var jenis = datas[0].jenis;
                         var deskripsi = datas[0].deskripsi;
                         var hargaJual = datas[0].hargajual || 0 ;
+                        var jumlahStock = datas[0].jumlah;
                         var detailText = nama +" || "+ merek +" || "+ jenis +" \n"+ deskripsi +"";
                         $(parentTr).find('pre[id^=detailTrx]').text(detailText);
                         $(parentTr).find('span[id^=spanHarga]').text(Intl.NumberFormat('en-IND').format(parseInt(hargaJual)));
@@ -233,6 +235,14 @@ $(document).ready(function() {
                         var parentTr = $(this).closest('tr');
                         var parentTable = $(this).closest('table');
                         var jumlah = ($(this).val() > 0)?parseInt($(this).val()) : 0;
+                        console.log(jumlahStock);
+                        if(jumlah > jumlahStock){
+                            var alertString = "Jumlah stock tidak cukup.!!\nJumlah stock kode "+ kode +" = "+jumlahStock;
+                            alert(alertString);
+                            $(parentTr).find('input[id^=trxJumlah]').val(jumlahStock);
+                            $(parentTr).find('input[id^=trxJumlah]').focusin();
+
+                        }
                         var harga = parseInt($(parentTr).find('span[id^=spanHarga]').text().replace(/[^0-9]/gi, ''));
                         //var harga = $(parentTr).find('span[id^=spanHarga]').text();
                         $(parentTr).find('span[id^=spanTotal]').text((Intl.NumberFormat('en-IND').format(jumlah*harga)));
