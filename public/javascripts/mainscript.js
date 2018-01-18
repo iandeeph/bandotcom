@@ -11,6 +11,15 @@ $(document).ready(function() {
     );
     $('select').material_select();
     $('.tooltipped').tooltip({delay: 50});
+    $('.datepicker').pickadate({
+        selectMonths: true, // Creates a dropdown to control month
+        selectYears: 15, // Creates a dropdown of 15 years to control year,
+        today: 'Today',
+        clear: 'Clear',
+        close: 'Ok',
+        closeOnSelect: true // Close upon selecting a date,
+    });
+    $('.modal').modal();
 
     //================ page add-stock ==================
     function ifNewKode(){
@@ -43,6 +52,8 @@ $(document).ready(function() {
                         $(parentTR).find('input[id^=addStockNama]').val(datas[0].nama);
                         $(parentTR).find('input[id^=addStockMerek]').val(datas[0].merek);
                         $(parentTR).find('input[id^=addStockJenis]').val(datas[0].jenis);
+                        $(parentTR).find('input[id^=addStockHargabeli]').val(Intl.NumberFormat('en-IND').format(datas[0].hargabeli));
+                        $(parentTR).find('input[id^=addStockHargajual]').val(Intl.NumberFormat('en-IND').format(datas[0].hargajual));
                         $(parentTR).find('textarea[id^=addStockDesc]').val(datas[0].deskripsi);
                         $(parentTR).find('textarea[id^=addStockCatatan]').val(datas[0].catatan);
                     }
@@ -62,6 +73,8 @@ $(document).ready(function() {
                         $(parentTR).find('input[id^=addStockNama]').val(datas[0].nama);
                         $(parentTR).find('input[id^=addStockMerek]').val(datas[0].merek);
                         $(parentTR).find('input[id^=addStockJenis]').val(datas[0].jenis);
+                        $(parentTR).find('input[id^=addStockHargabeli]').val(Intl.NumberFormat('en-IND').format(datas[0].hargabeli));
+                        $(parentTR).find('input[id^=addStockHargajual]').val(Intl.NumberFormat('en-IND').format(datas[0].hargajual));
                         $(parentTR).find('textarea[id^=addStockDesc]').val(datas[0].deskripsi);
                         $(parentTR).find('textarea[id^=addStockCatatan]').val(datas[0].catatan);
                         $(parentTR).find('input[id^=addStockNama]').attr('disabled',true);
@@ -78,6 +91,8 @@ $(document).ready(function() {
                         $(parentTR).find('input[id^=addStockNama]').val('');
                         $(parentTR).find('input[id^=addStockMerek]').val('');
                         $(parentTR).find('input[id^=addStockJenis]').val('');
+                        $(parentTR).find('input[id^=addStockHargabeli]').val('');
+                        $(parentTR).find('input[id^=addStockHargajual]').val('');
                         $(parentTR).find('textarea[id^=addStockDesc]').val('');
                         $(parentTR).find('textarea[id^=addStockCatatan]').val('');
                         $(parentTR).find('input[id^=addStockNama]').attr('disabled',false);
@@ -335,5 +350,43 @@ $(document).ready(function() {
         });
     });
     //================ page add-code end ==================
+    //================ page qry-edit start ==================
+    $('input[id^=editQty]').change(function(){
+        var currValue = parseInt($(this).attr("placeholder"));
+        if(parseInt($(this).val()) == currValue ){
+            var alertString = "Jumlah baru sama dengan jumlah stock saat ini..!!";
+            alert(alertString);
+            $(this).val('');
+            $(this).focusin();
+        }
+    });
+    //================ page qry-edit end ==================
+    //================ page detail-edit start ==================
+    $('input[id^=editHargaBeli], input[id^=editHargaJual]').each(function(){
+        $(this).keyup(function(){
+            var number = ($(this).val() != '' && $(this).val() != 'NaN') ? parseInt($(this).val().replace(/[^0-9]/gi, '')) : 0;
+            $(this).val(Intl.NumberFormat('en-IND').format(number))
+        });
+    });
+
+    $('input[id^=editKode]').change(function(){
+        var value = $(this).val();
+        var thisElem = $(this);
+        $.ajax({
+            url: './sending-content-by-name?name=' + encodeURIComponent(value),
+            type: "GET",
+            dataType: "json",
+            success: function (datas) {
+                if (datas.length != 0) {
+                    var alertString = "Kode sudah ada..!!";
+                    alert(alertString);
+                    $(thisElem).val('');
+                    $(thisElem).focus();
+
+                }
+            }
+        });
+    });
+    //================ page detail-edit end ==================
 });
 

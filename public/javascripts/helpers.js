@@ -96,22 +96,24 @@ exports.stripForNull = function (string) {
 };
 
 exports.numberFormat = function (number) {
-    var parse;
-    if(_.isNull(number)){
-        parse = "0";
-    }else {
+    var parse = 0;
+    number = parseInt(number);
+    //console.log(number);
+    if(_.isNumber(number)){
         parse = Intl.NumberFormat('en-IND').format(parseInt(number));
+    }else{
+        parse = 0;
     }
     return parse;
 };
 
 exports.toTimes = function (number, number2) {
     var parse;
-    if(_.isNull(number) || _.isNull(number2)){
-        parse = "0";
-    }else {
+    if(!_.isEmpty(number)){
         var tmpNum = (parseInt(number) * parseInt(number2));
         parse = Intl.NumberFormat('en-IND').format(tmpNum);
+    }else {
+        parse = 0;
     }
     return parse;
 };
@@ -121,4 +123,57 @@ exports.maxKey = function (object) {
     maxKey = (_.keys(object).length + 1);
     //maxKey = _.keys(object).length;
     return maxKey;
+};
+
+exports.jenisTrx = function (num) {
+    var parse;
+    switch (num){
+        case 1 :
+            parse = "Beli";
+            break;
+
+        case 2 :
+            parse = "Jual";
+            break;
+
+        case 3 :
+            parse = "Edit Inventory";
+            break;
+
+        default:
+            parse = "error";
+            break;
+    }
+    return parse;
+};
+
+exports.compare = function(lvalue, rvalue, options) {
+
+    if (arguments.length < 3)
+        throw new Error("Handlerbars Helper 'compare' needs 2 parameters");
+
+    var operator = options.hash.operator || "==";
+
+    var operators = {
+        '==':       function(l,r) { return l == r; },
+        '===':      function(l,r) { return l === r; },
+        '!=':       function(l,r) { return l != r; },
+        '<':        function(l,r) { return l < r; },
+        '>':        function(l,r) { return l > r; },
+        '<=':       function(l,r) { return l <= r; },
+        '>=':       function(l,r) { return l >= r; },
+        'typeof':   function(l,r) { return typeof l == r; }
+    };
+
+    if (!operators[operator])
+        throw new Error("Handlerbars Helper 'compare' doesn't know the operator "+operator);
+
+    var result = operators[operator](lvalue,rvalue);
+
+    if( result ) {
+        return options.fn(this);
+    } else {
+        return options.inverse(this);
+    }
+
 };
