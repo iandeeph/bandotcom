@@ -74,13 +74,25 @@ router.post('/', function(req, res) {
     }else {
         var dateNow = moment(Date.now()).format("YYYY-MM-DD HH:mm:ss");
         var lists = Array.prototype.slice.call(req.body.listTrx);
-        var other = req.body.other;
         var user = req.session.name;
         var orderid = randomize('?Aa0',10,dateNow);
         var newStock = 0;
-
+        var queryItemString = [];
         var arrayTrxQuery = [];
         var arrayLogQuery = [];
+        var ongkos = 0;
+        var lain = 0;
+
+        console.log(req.body.other);
+
+        if(!_.isEmpty(req.body.other.lain) && !_.isEmpty(req.body.other.ongkos)){
+            lain = parseInt(req.body.other.lain.replace(/[^0-9]/gi, ''));
+            ongkos = parseInt(req.body.other.ongkos.replace(/[^0-9]/gi, ''));
+        }else if(!_.isEmpty(req.body.other.ongkos)){
+            ongkos = parseInt(req.body.other.ongkos.replace(/[^0-9]/gi, ''));
+        }else if(!_.isEmpty(req.body.other.lain)) {
+            lain = parseInt(req.body.other.lain.replace(/[^0-9]/gi, ''));
+        }
 
         var queryStr = "select * from tb_kode " +
             "LEFT JOIN tb_item ON tb_kode.idkode = tb_item.idkode " +
@@ -105,22 +117,14 @@ router.post('/', function(req, res) {
                             "Catatan Barang : "+ resRows.catatan +"\n" +
                             "Harga Jual : "+ resRows.hargajual +"\n" +
                             "Jumlah : "+ listStock.jumlah +"\n" +
-                            "Ongkos : "+ parseInt(other.ongkos.replace(/[^0-9]/gi, '')) +"\n" +
-                            "Biaya Lain : "+ parseInt(other.lain.replace(/[^0-9]/gi, ''));
+                            "Ongkos : "+ ongkos +"\n" +
+                            "Biaya Lain : "+ lain;
                         arrayLogQuery.push([user, "Transaksi Kasir", logString, dateNow]);
-                        arrayTrxQuery.push([orderid, resRows.idkode, resRows.hargabeli, resRows.hargajual, dateNow, '2', listStock.jumlah, parseInt(other.ongkos.replace(/[^0-9]/gi, '')), parseInt(other.lain.replace(/[^0-9]/gi, ''))]);
+                        arrayTrxQuery.push([orderid, resRows.idkode, resRows.hargabeli, resRows.hargajual, dateNow, '2', listStock.jumlah, ongkos, lain]);
 
-                        var queryItemString = "UPDATE bengkelb_bandotcom.tb_item SET " +
+                        queryItemString.push("UPDATE bengkelb_bandotcom.tb_item SET " +
                             "jumlah = '"+ newStock  +"' " +
-                            "where idkode = '"+ resRows.idkode +"' ";
-                        return bandotcomConn.query(queryItemString)
-                            .then(function() {
-                            }).catch(function (error) {
-                                //logs out the error
-                                console.error(error);
-                                var string = encodeURIComponent("2");
-                                res.redirect('/?respost='+ string);
-                            });
+                            "where idkode = '"+ resRows.idkode +"' ");
                     });
                 }).then(function () {
                     Promise.all([arrayLogQuery, arrayTrxQuery])
@@ -132,10 +136,21 @@ router.post('/', function(req, res) {
                             var pushLog = bandotcomConn.query(queryLogString, [arrayLogQuery]);
 
                             Promise.all([pushTrx, pushLog])
-                                .then(function (results) {
-                                    var string = querystring.stringify({
-                                        "respost":"1"});
-                                    res.redirect('/?'+ string);
+                                .then(function () {
+                                    return Promise.each(queryItemString, function (queryItem) {
+                                        return bandotcomConn.query(queryItem)
+                                            .then(function() {
+                                            }).catch(function (error) {
+                                                //logs out the error
+                                                console.error(error);
+                                                var string = encodeURIComponent("2");
+                                                res.redirect('/?respost='+ string);
+                                            });
+                                    }).then(function () {
+                                        var string = querystring.stringify({
+                                            "respost":"1"});
+                                        res.redirect('/?'+ string);
+                                    });
                                 }).catch(function (error) {
                                     //logs out the error
                                     console.error(error);
@@ -148,85 +163,85 @@ router.post('/', function(req, res) {
     }
 });
 
-/* GET add-code page. */
-router.get('/add-code', function(req, res) {
-    if(_.isUndefined(req.session.login) || req.session.login != 'loged'){
-        res.redirect('/login-auth');
-    }else {
-        var passedVariable = req.query.respost;
-        var message = {"text": "", "color": ""};
-        switch (passedVariable) {
-            case '1':
-                message = {"text": "Jenis berhasil ditambah..", "color": "green"};
-                break;
-            case '2':
-                message = {"text": "Tambah jenis gagal..!!", "color": "red"};
-                break;
-            default :
-                message = {"text": "", "color": ""};
-                break;
-        }
-        res.render('add-code', {
-            message: message
-        });
-    }
-});
-
-/* POST add-code page. */
-router.post('/add-code', function(req, res) {
-    if(_.isUndefined(req.session.login) || req.session.login != 'loged'){
-        res.redirect('/login-auth');
-    }else {
-        var dateNow = moment(Date.now()).format("YYYY-MM-DD HH:mm:ss");
-        var lists = Array.prototype.slice.call(req.body.listStock);
-        var user = req.session.name;
-        var arrayKodeQuery = [];
-        var arrayItemQuery = [];
-        var arrayLogQuery = [];
-        var num = 1;
-        return bandotcomConn.query("select max(idkode) maxid from tb_kode")
-            .then(function (maxId) {
-                console.log(maxId);
-                return Promise.each(lists, function (listStock) {
-                    //`bengkelb_bandotcom`.`tb_kode` (`idkode`, `kode`, `nama`, `merek`, `jenis`, `deskripsi`, `catatan`)
-                    var maxIdCode = (parseInt(maxId[0].maxid) + num);
-                    //console.log(maxIdCode);
-                    arrayKodeQuery.push([maxIdCode, listStock.kode, listStock.nama, listStock.merek, listStock.jenis, listStock.deskripsi, listStock.catatan]);
-                    arrayItemQuery.push([maxIdCode, "0"]);
-
-                    var logString = "ID Kode : " + maxIdCode + "\n" +
-                        "Kode Barang : " + listStock.kode + "\n" +
-                        "Merek Barang : " + listStock.merek + "\n" +
-                        "Nama Barang : " + listStock.nama + "\n" +
-                        "Jenis Barang : " + listStock.jenis + "\n" +
-                        "Deskripsi Barang : " + listStock.deskripsi + "\n" +
-                        "Catatan Barang : " + listStock.catatan;
-
-                    arrayLogQuery.push([user, "Tambah Jenis Barang", logString, dateNow]);
-                    num++;
-                }).then(function () {
-                    var queryKodeString = "INSERT INTO bengkelb_bandotcom.tb_kode (idkode, kode, nama, merek, jenis, deskripsi, catatan) VALUES?";
-                    var queryItemString = "INSERT INTO bengkelb_bandotcom.tb_item (idkode, jumlah) VALUES?";
-                    var queryLogString = "INSERT INTO bengkelb_bandotcom.tb_log (user, aksi, detail, tanggal) VALUES?";
-
-                    var pushKode = bandotcomConn.query(queryKodeString, [arrayKodeQuery]);
-                    var pushItem = bandotcomConn.query(queryItemString, [arrayItemQuery]);
-                    var pushLog = bandotcomConn.query(queryLogString, [arrayLogQuery]);
-
-                    Promise.all([pushKode, pushItem, pushLog])
-                        .then(function (results) {
-                            var string = encodeURIComponent("1");
-                            res.redirect('/add-code?respost=' + string);
-                        }).catch(function (error) {
-                            //logs out the error
-                            console.error(error);
-                            var string = encodeURIComponent("2");
-                            res.redirect('/add-code?respost=' + string);
-                        });
-                });
-            });
-    }
-});
+///* GET add-code page. */
+//router.get('/add-code', function(req, res) {
+//    if(_.isUndefined(req.session.login) || req.session.login != 'loged'){
+//        res.redirect('/login-auth');
+//    }else {
+//        var passedVariable = req.query.respost;
+//        var message = {"text": "", "color": ""};
+//        switch (passedVariable) {
+//            case '1':
+//                message = {"text": "Jenis berhasil ditambah..", "color": "green"};
+//                break;
+//            case '2':
+//                message = {"text": "Tambah jenis gagal..!!", "color": "red"};
+//                break;
+//            default :
+//                message = {"text": "", "color": ""};
+//                break;
+//        }
+//        res.render('add-code', {
+//            message: message
+//        });
+//    }
+//});
+//
+///* POST add-code page. */
+//router.post('/add-code', function(req, res) {
+//    if(_.isUndefined(req.session.login) || req.session.login != 'loged'){
+//        res.redirect('/login-auth');
+//    }else {
+//        var dateNow = moment(Date.now()).format("YYYY-MM-DD HH:mm:ss");
+//        var lists = Array.prototype.slice.call(req.body.listStock);
+//        var user = req.session.name;
+//        var arrayKodeQuery = [];
+//        var arrayItemQuery = [];
+//        var arrayLogQuery = [];
+//        var num = 1;
+//        return bandotcomConn.query("select max(idkode) maxid from tb_kode")
+//            .then(function (maxId) {
+//                console.log(maxId);
+//                return Promise.each(lists, function (listStock) {
+//                    //`bengkelb_bandotcom`.`tb_kode` (`idkode`, `kode`, `nama`, `merek`, `jenis`, `deskripsi`, `catatan`)
+//                    var maxIdCode = (parseInt(maxId[0].maxid) + num);
+//                    //console.log(maxIdCode);
+//                    arrayKodeQuery.push([maxIdCode, listStock.kode, listStock.nama, listStock.merek, listStock.jenis, listStock.deskripsi, listStock.catatan]);
+//                    arrayItemQuery.push([maxIdCode, "0"]);
+//
+//                    var logString = "ID Kode : " + maxIdCode + "\n" +
+//                        "Kode Barang : " + listStock.kode + "\n" +
+//                        "Merek Barang : " + listStock.merek + "\n" +
+//                        "Nama Barang : " + listStock.nama + "\n" +
+//                        "Jenis Barang : " + listStock.jenis + "\n" +
+//                        "Deskripsi Barang : " + listStock.deskripsi + "\n" +
+//                        "Catatan Barang : " + listStock.catatan;
+//
+//                    arrayLogQuery.push([user, "Tambah Jenis Barang", logString, dateNow]);
+//                    num++;
+//                }).then(function () {
+//                    var queryKodeString = "INSERT INTO bengkelb_bandotcom.tb_kode (idkode, kode, nama, merek, jenis, deskripsi, catatan) VALUES?";
+//                    var queryItemString = "INSERT INTO bengkelb_bandotcom.tb_item (idkode, jumlah) VALUES?";
+//                    var queryLogString = "INSERT INTO bengkelb_bandotcom.tb_log (user, aksi, detail, tanggal) VALUES?";
+//
+//                    var pushKode = bandotcomConn.query(queryKodeString, [arrayKodeQuery]);
+//                    var pushItem = bandotcomConn.query(queryItemString, [arrayItemQuery]);
+//                    var pushLog = bandotcomConn.query(queryLogString, [arrayLogQuery]);
+//
+//                    Promise.all([pushKode, pushItem, pushLog])
+//                        .then(function (results) {
+//                            var string = encodeURIComponent("1");
+//                            res.redirect('/add-code?respost=' + string);
+//                        }).catch(function (error) {
+//                            //logs out the error
+//                            console.error(error);
+//                            var string = encodeURIComponent("2");
+//                            res.redirect('/add-code?respost=' + string);
+//                        });
+//                });
+//            });
+//    }
+//});
 
 /* GET ajax-sending-code page. */
 router.get('/sending-code', function(req, res) {
