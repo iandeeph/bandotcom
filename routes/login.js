@@ -9,10 +9,10 @@ var crypto      = require('crypto');
 //source : http://stackoverflow.com/questions/20210522/nodejs-mysql-error-connection-lost-the-server-closed-the-connection
 var db_config = {
     host         : 'localhost',
-    user         : 'root',
-    password     : 'c3rmat',
+    user         : 'bengkelb_root',
+    password     : 'assholefuck123A',
     insecureAuth : 'true',
-    database     : 'db_bandotcom'
+    database     : 'bengkelb_bandotcom'
 };
 
 var bandotcomConn;
@@ -72,10 +72,11 @@ router.post('/', function(req, res, next) {
                 req.session.login       = 'loged';
                 req.session.username    = loginItem.username;
                 req.session.name        = loginItem.nama;
+                req.session.priv        = loginItem.priv;
                 //console.log(req.session.name );
                 var logString = "Username : "+ loginItem.username +"\n" +
                     "Nama : "+loginItem.nama;
-                var queryLogString = "INSERT INTO db_bandotcom.tb_log (user, aksi, detail, tanggal) VALUES " +
+                var queryLogString = "INSERT INTO tb_log (user, aksi, detail, tanggal) VALUES " +
                     "('" + loginItem.nama + "', 'User Login','" + logString + "','" + dateNow + "')";
 
                 var logPush = bandotcomConn.query(queryLogString);

@@ -10,10 +10,10 @@ var querystring = require('querystring');
 //source : http://stackoverflow.com/questions/20210522/nodejs-mysql-error-connection-lost-the-server-closed-the-connection
 var db_config = {
     host         : 'localhost',
-    user         : 'root',
-    password     : 'c3rmat',
+    user         : 'bengkelb_root',
+    password     : 'assholefuck123A',
     insecureAuth : 'true',
-    database     : 'db_bandotcom'
+    database     : 'bengkelb_bandotcom'
 };
 
 var bandotcomConn;
@@ -44,12 +44,11 @@ function handleDisconnect() {
 handleDisconnect();
 
 /* GET home page. */
-router.get('/', function(req, res, next) {
+router.get('/', function(req, res) {
     if(_.isUndefined(req.session.login) || req.session.login != 'loged'){
         res.redirect('/login-auth');
     }else {
         var passedVariable = req.query.respost;
-        console.log(res.test);
         var message = {"text":"","color":""};
         switch (passedVariable){
             case '1':
@@ -69,7 +68,7 @@ router.get('/', function(req, res, next) {
 });
 
 /* POST home page. */
-router.post('/', function(req, res, next) {
+router.post('/', function(req, res) {
     if(_.isUndefined(req.session.login) || req.session.login != 'loged'){
         res.redirect('/login-auth');
     }else {
@@ -93,8 +92,8 @@ router.post('/', function(req, res, next) {
                         resolve(_.find(rowItem, {'kode' : listStock.kode}));
                     });
                     cekKodePromise.then(function(resRows) {
-                        //`db_bandotcom`.`tb_trx` (`orderid`, `idkode`, `hargabeli`, `hargajual`, `tanggal`, `jenistrx`, `jumlah`, `ongkos`, `lain`)
-                        //`db_bandotcom`.`tb_log` (`user`, `aksi`, `detail`, `tanggal`)
+                        //`bengkelb_bandotcom`.`tb_trx` (`orderid`, `idkode`, `hargabeli`, `hargajual`, `tanggal`, `jenistrx`, `jumlah`, `ongkos`, `lain`)
+                        //`bengkelb_bandotcom`.`tb_log` (`user`, `aksi`, `detail`, `tanggal`)
                         newStock = (parseInt(resRows.jumlah) - listStock.jumlah);
                         var logString = "Order ID : "+ orderid +"\n" +
                             "ID Kode : "+ resRows.idkode +"\n" +
@@ -111,7 +110,7 @@ router.post('/', function(req, res, next) {
                         arrayLogQuery.push([user, "Transaksi Kasir", logString, dateNow]);
                         arrayTrxQuery.push([orderid, resRows.idkode, resRows.hargabeli, resRows.hargajual, dateNow, '2', listStock.jumlah, parseInt(other.ongkos.replace(/[^0-9]/gi, '')), parseInt(other.lain.replace(/[^0-9]/gi, ''))]);
 
-                        var queryItemString = "UPDATE db_bandotcom.tb_item SET " +
+                        var queryItemString = "UPDATE bengkelb_bandotcom.tb_item SET " +
                             "jumlah = '"+ newStock  +"' " +
                             "where idkode = '"+ resRows.idkode +"' ";
                         return bandotcomConn.query(queryItemString)
@@ -126,8 +125,8 @@ router.post('/', function(req, res, next) {
                 }).then(function () {
                     Promise.all([arrayLogQuery, arrayTrxQuery])
                         .then(function () {
-                            var queryTrxString = "INSERT INTO db_bandotcom.tb_trx (orderid, idkode, hargabeli, hargajual, tanggal, jenistrx, jumlah, ongkos, lain) VALUES?";
-                            var queryLogString = "INSERT INTO db_bandotcom.tb_log (user, aksi, detail, tanggal) VALUES?";
+                            var queryTrxString = "INSERT INTO bengkelb_bandotcom.tb_trx (orderid, idkode, hargabeli, hargajual, tanggal, jenistrx, jumlah, ongkos, lain) VALUES?";
+                            var queryLogString = "INSERT INTO bengkelb_bandotcom.tb_log (user, aksi, detail, tanggal) VALUES?";
 
                             var pushTrx = bandotcomConn.query(queryTrxString, [arrayTrxQuery]);
                             var pushLog = bandotcomConn.query(queryLogString, [arrayLogQuery]);
@@ -136,12 +135,12 @@ router.post('/', function(req, res, next) {
                                 .then(function (results) {
                                     var string = querystring.stringify({
                                         "respost":"1"});
-                                    res.redirect('/print?'+ string);
+                                    res.redirect('/?'+ string);
                                 }).catch(function (error) {
                                     //logs out the error
                                     console.error(error);
                                     var string = encodeURIComponent("2");
-                                    res.redirect('/print?respost='+ string);
+                                    res.redirect('/?respost='+ string);
                                 });
                         });
                 });
@@ -150,7 +149,7 @@ router.post('/', function(req, res, next) {
 });
 
 /* GET add-code page. */
-router.get('/add-code', function(req, res, next) {
+router.get('/add-code', function(req, res) {
     if(_.isUndefined(req.session.login) || req.session.login != 'loged'){
         res.redirect('/login-auth');
     }else {
@@ -174,7 +173,7 @@ router.get('/add-code', function(req, res, next) {
 });
 
 /* POST add-code page. */
-router.post('/add-code', function(req, res, next) {
+router.post('/add-code', function(req, res) {
     if(_.isUndefined(req.session.login) || req.session.login != 'loged'){
         res.redirect('/login-auth');
     }else {
@@ -189,7 +188,7 @@ router.post('/add-code', function(req, res, next) {
             .then(function (maxId) {
                 console.log(maxId);
                 return Promise.each(lists, function (listStock) {
-                    //`db_bandotcom`.`tb_kode` (`idkode`, `kode`, `nama`, `merek`, `jenis`, `deskripsi`, `catatan`)
+                    //`bengkelb_bandotcom`.`tb_kode` (`idkode`, `kode`, `nama`, `merek`, `jenis`, `deskripsi`, `catatan`)
                     var maxIdCode = (parseInt(maxId[0].maxid) + num);
                     //console.log(maxIdCode);
                     arrayKodeQuery.push([maxIdCode, listStock.kode, listStock.nama, listStock.merek, listStock.jenis, listStock.deskripsi, listStock.catatan]);
@@ -206,9 +205,9 @@ router.post('/add-code', function(req, res, next) {
                     arrayLogQuery.push([user, "Tambah Jenis Barang", logString, dateNow]);
                     num++;
                 }).then(function () {
-                    var queryKodeString = "INSERT INTO db_bandotcom.tb_kode (idkode, kode, nama, merek, jenis, deskripsi, catatan) VALUES?";
-                    var queryItemString = "INSERT INTO db_bandotcom.tb_item (idkode, jumlah) VALUES?";
-                    var queryLogString = "INSERT INTO db_bandotcom.tb_log (user, aksi, detail, tanggal) VALUES?";
+                    var queryKodeString = "INSERT INTO bengkelb_bandotcom.tb_kode (idkode, kode, nama, merek, jenis, deskripsi, catatan) VALUES?";
+                    var queryItemString = "INSERT INTO bengkelb_bandotcom.tb_item (idkode, jumlah) VALUES?";
+                    var queryLogString = "INSERT INTO bengkelb_bandotcom.tb_log (user, aksi, detail, tanggal) VALUES?";
 
                     var pushKode = bandotcomConn.query(queryKodeString, [arrayKodeQuery]);
                     var pushItem = bandotcomConn.query(queryItemString, [arrayItemQuery]);
@@ -230,7 +229,7 @@ router.post('/add-code', function(req, res, next) {
 });
 
 /* GET ajax-sending-code page. */
-router.get('/sending-code', function(req, res, next) {
+router.get('/sending-code', function(req, res) {
     if(_.isUndefined(req.session.login) || req.session.login != 'loged'){
         res.redirect('/login-auth');
     }else {
@@ -245,7 +244,7 @@ router.get('/sending-code', function(req, res, next) {
 });
 
 /* GET ajax-sending-code page. */
-router.get('/sending-code-content', function(req, res, next) {
+router.get('/sending-code-content', function(req, res) {
     if(_.isUndefined(req.session.login) || req.session.login != 'loged'){
         res.redirect('/login-auth');
     }else {
@@ -270,7 +269,7 @@ router.get('/sending-code-content', function(req, res, next) {
 
 
 /* GET ajax-sending-code page. */
-router.get('/sending-content-by-name', function(req, res, next) {
+router.get('/sending-content-by-name', function(req, res) {
     if(_.isUndefined(req.session.login) || req.session.login != 'loged'){
         res.redirect('/login-auth');
     }else {
@@ -292,7 +291,7 @@ router.get('/sending-content-by-name', function(req, res, next) {
 });
 
 /* GET ajax-sending-code page. */
-router.get('/sending-full-content', function(req, res, next) {
+router.get('/sending-full-content', function(req, res) {
     if(_.isUndefined(req.session.login) || req.session.login != 'loged'){
         res.redirect('/login-auth');
     }else {
@@ -312,7 +311,7 @@ router.get('/sending-full-content', function(req, res, next) {
 });
 
 /* GET add-stock page. */
-router.get('/add-stock', function(req, res, next) {
+router.get('/add-stock', function(req, res) {
     if(_.isUndefined(req.session.login) || req.session.login != 'loged'){
         res.redirect('/login-auth');
     }else {
@@ -344,12 +343,12 @@ router.get('/add-stock', function(req, res, next) {
 });
 
 /* POST add-stock page. */
-router.post('/add-stock', function(req, res, next) {
+router.post('/add-stock', function(req, res) {
     if(_.isUndefined(req.session.login) || req.session.login != 'loged'){
         res.redirect('/login-auth');
     }else {
-        //`db_bandotcom`.`tb_item` (`idkode`, `hargabeli`, `hargajual`, `jumlah`)
-        //`db_bandotcom`.`tb_kode` (`kode`, `nama`, `jenis`, `deskripsi`, `catatan`)
+        //`bengkelb_bandotcom`.`tb_item` (`idkode`, `hargabeli`, `hargajual`, `jumlah`)
+        //`bengkelb_bandotcom`.`tb_kode` (`kode`, `nama`, `jenis`, `deskripsi`, `catatan`)
 
         var dateNow = moment(Date.now()).format("YYYY-MM-DD HH:mm:ss");
         var lists = Array.prototype.slice.call(req.body.listStock);
@@ -378,13 +377,13 @@ router.post('/add-stock', function(req, res, next) {
                         if (!_.isEmpty(resRows) || !_.isUndefined(resRows)) {
                             //KALO IDKODE SUDAH ADA
                             total = (parseInt(listStock.jumlah.replace(/[^0-9]/gi, '')) + parseInt(resRows.jumlah));
-                            queryItemString = "UPDATE db_bandotcom.tb_item SET " +
+                            queryItemString = "UPDATE bengkelb_bandotcom.tb_item SET " +
                                 "hargabeli = '" + hargaBeli + "', " +
                                 "hargajual = '" + hargaJual + "', " +
                                 "jumlah = '" + total + "' " +
                                 "where idkode = '" + listStock.kode + "' ";
 
-                            queryTrxString = "INSERT INTO db_bandotcom.tb_trx (idkode, hargabeli, hargajual, tanggal, jenistrx, jumlah) VALUES " +
+                            queryTrxString = "INSERT INTO bengkelb_bandotcom.tb_trx (idkode, hargabeli, hargajual, tanggal, jenistrx, jumlah) VALUES " +
                                 "('" + listStock.kode + "', '" + hargaBeli + "', '" + hargaJual + "', '" + dateNow + "', '1', '" + jumlah + "')";
 
                             logString = "Kode Barang : " + listStock.kode + "\n" +
@@ -392,7 +391,7 @@ router.post('/add-stock', function(req, res, next) {
                                 "Harga Jual : " + hargaJual + "\n" +
                                 "Jumlah : " + jumlah;
 
-                            queryLogString = "INSERT INTO db_bandotcom.tb_log (user, aksi, detail, tanggal) VALUES " +
+                            queryLogString = "INSERT INTO bengkelb_bandotcom.tb_log (user, aksi, detail, tanggal) VALUES " +
                                 "('" + user + "', 'Tambah Stock','" + logString + "','" + dateNow + "')";
 
                             var itemPush = bandotcomConn.query(queryItemString);
@@ -416,14 +415,14 @@ router.post('/add-stock', function(req, res, next) {
                                 if (!_.isEmpty(resRows) || !_.isUndefined(resRows)) {
                                     total = (parseInt(listStock.jumlah.replace(/[^0-9]/gi, '')) + parseInt(resRows.jumlah));
                                     //KALO NAMA KODE SUDAH ADA
-                                    queryItemString = "UPDATE db_bandotcom.tb_item SET " +
+                                    queryItemString = "UPDATE bengkelb_bandotcom.tb_item SET " +
                                         "hargabeli = '" + hargaBeli + "', " +
                                         "hargajual = '" + hargaJual + "', " +
                                         "jumlah = '" + total + "' " +
                                         "where kode = '" + resRows.kode + "' ";
 
 
-                                    queryTrxString = "INSERT INTO db_bandotcom.tb_trx (idkode, hargabeli, hargajual, tanggal, jenistrx, jumlah) VALUES " +
+                                    queryTrxString = "INSERT INTO bengkelb_bandotcom.tb_trx (idkode, hargabeli, hargajual, tanggal, jenistrx, jumlah) VALUES " +
                                         "('" + listStock.kode + "', '" + hargaBeli + "', '" + hargaJual + "', '" + dateNow + "', '1', '" + jumlah + "')";
 
                                     logString = "Kode Barang : " + listStock.kode + "\n" +
@@ -431,7 +430,7 @@ router.post('/add-stock', function(req, res, next) {
                                         "Harga Jual : " + hargaJual + "\n" +
                                         "Jumlah : " + jumlah;
 
-                                    queryLogString = "INSERT INTO db_bandotcom.tb_log (user, aksi, detail, tanggal) VALUES " +
+                                    queryLogString = "INSERT INTO bengkelb_bandotcom.tb_log (user, aksi, detail, tanggal) VALUES " +
                                         "('" + user + "', 'Tambah Stock','" + logString + "','" + dateNow + "')";
 
                                     var itemPush = bandotcomConn.query(queryItemString);
@@ -455,12 +454,12 @@ router.post('/add-stock', function(req, res, next) {
                                     findMaxIdKodePromise.then(function (resMaxId) {
                                         var newIdKode = (parseInt(resMaxId.idkode) + num);
                                         console.log(newIdKode);
-                                        var queryKodeString = "INSERT INTO db_bandotcom.tb_kode (idkode, kode, nama, merek, jenis, deskripsi, catatan) VALUES " +
+                                        var queryKodeString = "INSERT INTO bengkelb_bandotcom.tb_kode (idkode, kode, nama, merek, jenis, deskripsi, catatan) VALUES " +
                                             "('" + newIdKode + "', '" + listStock.kode + "', '" + listStock.nama + "', '" + listStock.merek + "', '" + listStock.jenis + "', '" + listStock.deskripsi + "', '" + listStock.catatan + "')";
-                                        var queryItemString = "INSERT INTO db_bandotcom.tb_item (idkode, hargabeli, hargajual, jumlah) VALUES " +
+                                        var queryItemString = "INSERT INTO bengkelb_bandotcom.tb_item (idkode, hargabeli, hargajual, jumlah) VALUES " +
                                             "('" + newIdKode + "', '" + hargaBeli + "', '" + hargaJual + "', '" + jumlah + "')";
 
-                                        queryTrxString = "INSERT INTO db_bandotcom.tb_trx (idkode, hargabeli, hargajual, tanggal, jenistrx, jumlah) VALUES " +
+                                        queryTrxString = "INSERT INTO bengkelb_bandotcom.tb_trx (idkode, hargabeli, hargajual, tanggal, jenistrx, jumlah) VALUES " +
                                             "('" + newIdKode + "', '" + hargaBeli + "', '" + hargaJual + "', '" + dateNow + "', '1', '" + jumlah + "')";
 
                                         logString = "Kode Barang : " + listStock.kode + "\n" +
@@ -473,7 +472,7 @@ router.post('/add-stock', function(req, res, next) {
                                             "Harga Jual : " + hargaJual + "\n" +
                                             "Jumlah : " + jumlah;
 
-                                        queryLogString = "INSERT INTO db_bandotcom.tb_log (user, aksi, detail, tanggal) VALUES " +
+                                        queryLogString = "INSERT INTO bengkelb_bandotcom.tb_log (user, aksi, detail, tanggal) VALUES " +
                                             "('" + user + "', 'Tambah Stock Jenis Baru','" + logString + "','" + dateNow + "')";
 
                                         var itemPush = bandotcomConn.query(queryItemString);
@@ -506,7 +505,7 @@ router.post('/add-stock', function(req, res, next) {
 });
 
 /* GET recap page. */
-router.get('/recap-stock', function(req, res, next) {
+router.get('/recap-stock', function(req, res) {
     if(_.isUndefined(req.session.login) || req.session.login != 'loged'){
         res.redirect('/login-auth');
     }else {
@@ -525,7 +524,7 @@ router.get('/recap-stock', function(req, res, next) {
 });
 
 /* GET trx-in page. */
-router.get('/trxin-report', function(req, res, next) {
+router.get('/trxin-report', function(req, res) {
     if(_.isUndefined(req.session.login) || req.session.login != 'loged'){
         res.redirect('/login-auth');
     }else {
@@ -551,7 +550,7 @@ router.get('/trxin-report', function(req, res, next) {
 });
 
 /* POST trx-in page. */
-router.post('/trxin-report', function(req, res, next) {
+router.post('/trxin-report', function(req, res) {
     if(_.isUndefined(req.session.login) || req.session.login != 'loged'){
         res.redirect('/login-auth');
     }else {
@@ -598,7 +597,7 @@ router.post('/trxin-report', function(req, res, next) {
 });
 
 /* GET trx-out page. */
-router.get('/trxout-report', function(req, res, next) {
+router.get('/trxout-report', function(req, res) {
     if(_.isUndefined(req.session.login) || req.session.login != 'loged'){
         res.redirect('/login-auth');
     }else {
@@ -628,7 +627,7 @@ router.get('/trxout-report', function(req, res, next) {
 });
 
 /* POST trx-out page. */
-router.post('/trxout-report', function(req, res, next) {
+router.post('/trxout-report', function(req, res) {
     if(_.isUndefined(req.session.login) || req.session.login != 'loged'){
         res.redirect('/login-auth');
     }else {
@@ -678,7 +677,7 @@ router.post('/trxout-report', function(req, res, next) {
 });
 
 /* GET income page. */
-router.get('/income-report', function(req, res, next) {
+router.get('/income-report', function(req, res) {
     if(_.isUndefined(req.session.login) || req.session.login != 'loged'){
         res.redirect('/login-auth');
     }else {
@@ -729,7 +728,7 @@ router.get('/income-report', function(req, res, next) {
                                 rows: rowItem,
                                 grandTotalJual: grandTotalJual,
                                 grandTotalBeli: (grandTotalBeli + grandTotalEdit),
-                                totalLaba: (grandTotalJual - grandTotalBeli)
+                                totalLaba: (grandTotalJual - (grandTotalBeli + grandTotalEdit))
                             });
 
                         }).catch(function (error) {
@@ -743,7 +742,7 @@ router.get('/income-report', function(req, res, next) {
 });
 
 /* POST income page. */
-router.post('/income-report', function(req, res, next) {
+router.post('/income-report', function(req, res) {
     if(_.isUndefined(req.session.login) || req.session.login != 'loged'){
         res.redirect('/login-auth');
     }else {
@@ -820,11 +819,16 @@ router.post('/income-report', function(req, res, next) {
 });
 
 /* GET log page. */
-router.get('/log', function(req, res, next) {
+router.get('/log', function(req, res) {
     if(_.isUndefined(req.session.login) || req.session.login != 'loged'){
         res.redirect('/login-auth');
     }else {
-        bandotcomConn.query("select * from tb_log order by tanggal DESC")
+        var dateMonth = moment().format("M");
+        var dateYear = moment().format("YYYY");
+        bandotcomConn.query("select * from tb_log where " +
+            "MONTH(tanggal) = '" + dateMonth + "' " +
+            "AND YEAR(tanggal) = '" + dateYear + "' " +
+            "order by tanggal DESC")
             .then(function (rowItem) {
                 res.render('log', {
                     rows: rowItem
@@ -836,8 +840,40 @@ router.get('/log', function(req, res, next) {
     }
 });
 
+/* POST log page. */
+router.post('/log', function(req, res) {
+    if(_.isUndefined(req.session.login) || req.session.login != 'loged'){
+        res.redirect('/login-auth');
+    }else {
+        var postDate = req.body.periode;
+        if (_.isEmpty(postDate.start)) {
+            res.redirect('/log');
+        } else {
+            var startDate = moment(new Date(postDate.start)).format("YYYY-MM-DD 00:00:00");
+            var endDate = moment(new Date(postDate.end)).format("YYYY-MM-DD 23:59:59");
+            var filterDate = {
+                'start': moment(new Date(postDate.start)).format("DD MMMM, YYYY"),
+                'end': moment(new Date(postDate.end)).format("DD MMMM, YYYY")
+            };
+            bandotcomConn.query("select * from tb_log where " +
+                "tanggal between '" + startDate + "' " +
+                "AND '" + endDate + "' " +
+                "order by tanggal DESC")
+                .then(function (rowItem) {
+                    res.render('log', {
+                        rows: rowItem,
+                        filterDate: filterDate
+                    });
+                }).catch(function (error) {
+                    //logs out the error
+                    console.error(error);
+                });
+        }
+    }
+});
+
 /* GET edit-qty page. */
-router.get('/qty-edit', function(req, res, next) {
+router.get('/qty-edit', function(req, res) {
     if(_.isUndefined(req.session.login) || req.session.login != 'loged'){
         res.redirect('/login-auth');
     }else {
@@ -870,7 +906,7 @@ router.get('/qty-edit', function(req, res, next) {
 });
 
 /* GET edit-qty page. */
-router.get('/detail-edit', function(req, res, next) {
+router.get('/detail-edit', function(req, res) {
     if(_.isUndefined(req.session.login) || req.session.login != 'loged'){
         res.redirect('/login-auth');
     }else {
@@ -907,7 +943,7 @@ router.get('/detail-edit', function(req, res, next) {
 //insert trx di tb_trx dengan jenistrx = 3
 //jenistrx = 3 bersifat minus/negatif pada kolom harga beli
 //-Math.abs(num);
-router.post('/qty-edit', function(req, res, next) {
+router.post('/qty-edit', function(req, res) {
     if(_.isUndefined(req.session.login) || req.session.login != 'loged'){
         res.redirect('/login-auth');
     }else {
@@ -939,9 +975,9 @@ router.post('/qty-edit', function(req, res, next) {
                     "Harga Beli : " + rowItem[0].hargabeli + "\n" +
                     "Harga Jual : " + rowItem[0].hargajual + "\n" +
                     "Jumlah Baru : " + postJumlah;
-                var insertLog = "INSERT INTO db_bandotcom.tb_log (user, aksi, detail, tanggal) VALUES " +
+                var insertLog = "INSERT INTO bengkelb_bandotcom.tb_log (user, aksi, detail, tanggal) VALUES " +
                     "('" + user + "', 'Edit Jumlah Stock','" + logString + "','" + dateNow + "')";
-                var insertTrx = "INSERT INTO db_bandotcom.tb_trx (idkode, hargabeli, hargajual, tanggal, jenistrx, jumlah) VALUES " +
+                var insertTrx = "INSERT INTO bengkelb_bandotcom.tb_trx (idkode, hargabeli, hargajual, tanggal, jenistrx, jumlah) VALUES " +
                     "('" + rowItem[0].idkode + "', '" + rowItem[0].hargabeli + "', '" + rowItem[0].hargajual + "', '" + dateNow + "', '3', '" + jumlahForTrx + "')";
 
                 var itemPush = bandotcomConn.query(updateItem);
@@ -964,7 +1000,7 @@ router.post('/qty-edit', function(req, res, next) {
 
 /* POST edit-price page. */
 //update harga di tb_item
-router.post('/detail-edit', function(req, res, next) {
+router.post('/detail-edit', function(req, res) {
     if(_.isUndefined(req.session.login) || req.session.login != 'loged'){
         res.redirect('/login-auth');
     }else {
@@ -1002,7 +1038,7 @@ router.post('/detail-edit', function(req, res, next) {
                     "Catatan Barang : " + editPost[0].catatan + "\n" +
                     "Harga Beli : " + editPost[0].hargabeli + "\n" +
                     "Harga Jual : " + editPost[0].hargajual;
-                var insertLog = "INSERT INTO db_bandotcom.tb_log (user, aksi, detail, tanggal) VALUES " +
+                var insertLog = "INSERT INTO bengkelb_bandotcom.tb_log (user, aksi, detail, tanggal) VALUES " +
                     "('" + user + "', 'Edit Jumlah Stock','" + logString + "','" + dateNow + "')";
 
                 var kodePush = bandotcomConn.query(updateKode);
@@ -1024,7 +1060,7 @@ router.post('/detail-edit', function(req, res, next) {
 });
 
 /* GET logout page. */
-router.get('/logout', function(req, res, next) {
+router.get('/logout', function(req, res) {
     if(_.isUndefined(req.session.login) || req.session.login != 'loged'){
         res.redirect('/login-auth');
     }else {

@@ -1,8 +1,8 @@
-CREATE DATABASE  IF NOT EXISTS `db_bandotcom` /*!40100 DEFAULT CHARACTER SET latin1 */;
-USE `db_bandotcom`;
+CREATE DATABASE  IF NOT EXISTS `bengkelb_bandotcom` /*!40100 DEFAULT CHARACTER SET latin1 */;
+USE `bengkelb_bandotcom`;
 -- MySQL dump 10.13  Distrib 5.5.58, for debian-linux-gnu (i686)
 --
--- Host: 127.0.0.1    Database: db_bandotcom
+-- Host: 127.0.0.1    Database: bengkelb_bandotcom
 -- ------------------------------------------------------
 -- Server version	5.5.58-0ubuntu0.14.04.1
 
