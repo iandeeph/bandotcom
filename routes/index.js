@@ -374,7 +374,7 @@ router.post('/add-stock', function(req, res) {
         var logString;
         var string = encodeURIComponent("1");
         var num = 1;
-        return bandotcomConn.query("select * from tb_kode " +
+        return bandotcomConn.query("select *, tb_kode.idkode as idkode from tb_kode " +
             "LEFT JOIN tb_item ON tb_kode.idkode = tb_item.idkode " +
             "order by tb_kode.kode")
             .then(function (rows) {
