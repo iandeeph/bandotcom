@@ -468,7 +468,7 @@ router.post('/add-stock', function(req, res) {
 
                                     findMaxIdKodePromise.then(function (resMaxId) {
                                         console.log(resMaxId);
-                                        var maxID = resMaxId.idkode || 0;
+                                        var maxID = (_.isUndefined(resMaxId))? 0 : resMaxId.idkode;
                                         var newIdKode = (parseInt(maxID) + num);
                                         console.log(newIdKode);
                                         var queryKodeString = "INSERT INTO bengkelb_bandotcom.tb_kode (idkode, kode, nama, merek, jenis, deskripsi, catatan) VALUES " +
