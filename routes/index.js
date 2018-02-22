@@ -379,24 +379,20 @@ router.post('/add-stock', function(req, res) {
             "order by tb_kode.kode")
             .then(function (rows) {
                 return Promise.each(lists, function (listStock) {
-                    var cekidPromise = new Promise(function (resolve, reject) {
-                        resolve(_.find(rows, {'idkode': parseInt(listStock.kode)}));
+                    var cekNamakodePromise = new Promise(function (resolve, reject) {
+                        resolve(_.find(rows, {'kode': parseInt(listStock.kode)}));
                     });
 
-                    cekidPromise.then(function (resRows) {
-                        var hargaBeli = parseInt(listStock.hargabeli.replace(/[^0-9]/gi, ''));
-                        var hargaJual = parseInt(listStock.hargajual.replace(/[^0-9]/gi, ''));
-                        var jumlah = parseInt(listStock.jumlah.replace(/[^0-9]/gi, ''));
-                        var total;
-
+                    cekNamakodePromise.then(function (resRows) {
                         if (!_.isEmpty(resRows) || !_.isUndefined(resRows)) {
-                            //KALO IDKODE SUDAH ADA
                             total = (parseInt(listStock.jumlah.replace(/[^0-9]/gi, '')) + parseInt(resRows.jumlah));
+                            //KALO NAMA KODE SUDAH ADA
                             queryItemString = "UPDATE bengkelb_bandotcom.tb_item SET " +
                                 "hargabeli = '" + hargaBeli + "', " +
                                 "hargajual = '" + hargaJual + "', " +
                                 "jumlah = '" + total + "' " +
-                                "where idkode = '" + listStock.kode + "' ";
+                                "where kode = '" + resRows.kode + "' ";
+
 
                             queryTrxString = "INSERT INTO bengkelb_bandotcom.tb_trx (idkode, hargabeli, hargajual, tanggal, jenistrx, jumlah) VALUES " +
                                 "('" + listStock.kode + "', '" + hargaBeli + "', '" + hargaJual + "', '" + dateNow + "', '1', '" + jumlah + "')";
@@ -422,99 +418,58 @@ router.post('/add-stock', function(req, res) {
                                     console.error(error);
                                 });
                         } else {
-                            var cekNamakodePromise = new Promise(function (resolve, reject) {
-                                resolve(_.find(rows, {'kode': parseInt(listStock.kode)}));
+                            //KALO KODE BELUM ADA SAMA SEKALI
+                            var findMaxIdKodePromise = new Promise(function (resolve, reject) {
+                                resolve(_.maxBy(rows, 'idkode'));
                             });
 
-                            cekNamakodePromise.then(function (resRows) {
-                                if (!_.isEmpty(resRows) || !_.isUndefined(resRows)) {
-                                    total = (parseInt(listStock.jumlah.replace(/[^0-9]/gi, '')) + parseInt(resRows.jumlah));
-                                    //KALO NAMA KODE SUDAH ADA
-                                    queryItemString = "UPDATE bengkelb_bandotcom.tb_item SET " +
-                                        "hargabeli = '" + hargaBeli + "', " +
-                                        "hargajual = '" + hargaJual + "', " +
-                                        "jumlah = '" + total + "' " +
-                                        "where kode = '" + resRows.kode + "' ";
+                            findMaxIdKodePromise.then(function (resMaxId) {
+                                console.log(resMaxId);
+                                var maxID = (_.isUndefined(resMaxId))? 0 : resMaxId.idkode;
+                                var newIdKode = (parseInt(maxID) + num);
+                                console.log(newIdKode);
+                                var queryKodeString = "INSERT INTO bengkelb_bandotcom.tb_kode (idkode, kode, nama, merek, jenis, deskripsi, catatan) VALUES " +
+                                    "('" + newIdKode + "', '" + listStock.kode + "', '" + listStock.nama + "', '" + listStock.merek + "', '" + listStock.jenis + "', '" + listStock.deskripsi + "', '" + listStock.catatan + "')";
+                                var queryItemString = "INSERT INTO bengkelb_bandotcom.tb_item (idkode, hargabeli, hargajual, jumlah) VALUES " +
+                                    "('" + newIdKode + "', '" + hargaBeli + "', '" + hargaJual + "', '" + jumlah + "')";
 
+                                queryTrxString = "INSERT INTO bengkelb_bandotcom.tb_trx (idkode, hargabeli, hargajual, tanggal, jenistrx, jumlah) VALUES " +
+                                    "('" + newIdKode + "', '" + hargaBeli + "', '" + hargaJual + "', '" + dateNow + "', '1', '" + jumlah + "')";
 
-                                    queryTrxString = "INSERT INTO bengkelb_bandotcom.tb_trx (idkode, hargabeli, hargajual, tanggal, jenistrx, jumlah) VALUES " +
-                                        "('" + listStock.kode + "', '" + hargaBeli + "', '" + hargaJual + "', '" + dateNow + "', '1', '" + jumlah + "')";
+                                logString = "Kode Barang : " + listStock.kode + "\n" +
+                                    "Merek Barang : " + listStock.merek + "\n" +
+                                    "Nama Barang : " + listStock.nama + "\n" +
+                                    "Jenis Barang : " + listStock.jenis + "\n" +
+                                    "Deskripsi Barang : " + listStock.deskripsi + "\n" +
+                                    "Catatan Barang : " + listStock.catatan + "\n" +
+                                    "Harga Beli : " + hargaBeli + "\n" +
+                                    "Harga Jual : " + hargaJual + "\n" +
+                                    "Jumlah : " + jumlah;
 
-                                    logString = "Kode Barang : " + listStock.kode + "\n" +
-                                        "Harga Beli : " + hargaBeli + "\n" +
-                                        "Harga Jual : " + hargaJual + "\n" +
-                                        "Jumlah : " + jumlah;
+                                queryLogString = "INSERT INTO bengkelb_bandotcom.tb_log (user, aksi, detail, tanggal) VALUES " +
+                                    "('" + user + "', 'Tambah Stock Jenis Baru','" + logString + "','" + dateNow + "')";
 
-                                    queryLogString = "INSERT INTO bengkelb_bandotcom.tb_log (user, aksi, detail, tanggal) VALUES " +
-                                        "('" + user + "', 'Tambah Stock','" + logString + "','" + dateNow + "')";
+                                var itemPush = bandotcomConn.query(queryItemString);
+                                var kodePush = bandotcomConn.query(queryKodeString);
+                                var trxPush = bandotcomConn.query(queryTrxString);
+                                var logPush = bandotcomConn.query(queryLogString);
 
-                                    var itemPush = bandotcomConn.query(queryItemString);
-                                    var trxPush = bandotcomConn.query(queryTrxString);
-                                    var logPush = bandotcomConn.query(queryLogString);
-
-                                    Promise.all([itemPush, trxPush, logPush])
-                                        .then(function () {
-                                            string = encodeURIComponent("1");
-                                        }).catch(function (error) {
-                                            //logs out the error
-                                            string = encodeURIComponent("2");
-                                            console.error(error);
-                                        });
-                                } else {
-                                    //KALO KODE BELUM ADA SAMA SEKALI
-                                    var findMaxIdKodePromise = new Promise(function (resolve, reject) {
-                                        resolve(_.maxBy(rows, 'idkode'));
-                                    });
-
-                                    findMaxIdKodePromise.then(function (resMaxId) {
-                                        console.log(resMaxId);
-                                        var maxID = (_.isUndefined(resMaxId))? 0 : resMaxId.idkode;
-                                        var newIdKode = (parseInt(maxID) + num);
-                                        console.log(newIdKode);
-                                        var queryKodeString = "INSERT INTO bengkelb_bandotcom.tb_kode (idkode, kode, nama, merek, jenis, deskripsi, catatan) VALUES " +
-                                            "('" + newIdKode + "', '" + listStock.kode + "', '" + listStock.nama + "', '" + listStock.merek + "', '" + listStock.jenis + "', '" + listStock.deskripsi + "', '" + listStock.catatan + "')";
-                                        var queryItemString = "INSERT INTO bengkelb_bandotcom.tb_item (idkode, hargabeli, hargajual, jumlah) VALUES " +
-                                            "('" + newIdKode + "', '" + hargaBeli + "', '" + hargaJual + "', '" + jumlah + "')";
-
-                                        queryTrxString = "INSERT INTO bengkelb_bandotcom.tb_trx (idkode, hargabeli, hargajual, tanggal, jenistrx, jumlah) VALUES " +
-                                            "('" + newIdKode + "', '" + hargaBeli + "', '" + hargaJual + "', '" + dateNow + "', '1', '" + jumlah + "')";
-
-                                        logString = "Kode Barang : " + listStock.kode + "\n" +
-                                            "Merek Barang : " + listStock.merek + "\n" +
-                                            "Nama Barang : " + listStock.nama + "\n" +
-                                            "Jenis Barang : " + listStock.jenis + "\n" +
-                                            "Deskripsi Barang : " + listStock.deskripsi + "\n" +
-                                            "Catatan Barang : " + listStock.catatan + "\n" +
-                                            "Harga Beli : " + hargaBeli + "\n" +
-                                            "Harga Jual : " + hargaJual + "\n" +
-                                            "Jumlah : " + jumlah;
-
-                                        queryLogString = "INSERT INTO bengkelb_bandotcom.tb_log (user, aksi, detail, tanggal) VALUES " +
-                                            "('" + user + "', 'Tambah Stock Jenis Baru','" + logString + "','" + dateNow + "')";
-
-                                        var itemPush = bandotcomConn.query(queryItemString);
-                                        var kodePush = bandotcomConn.query(queryKodeString);
-                                        var trxPush = bandotcomConn.query(queryTrxString);
-                                        var logPush = bandotcomConn.query(queryLogString);
-
-                                        Promise.all([itemPush, kodePush, trxPush, logPush])
-                                            .then(function () {
-                                                string = encodeURIComponent("1");
-                                            }).catch(function (error) {
-                                                //logs out the error
-                                                string = encodeURIComponent("2");
-                                                console.error(error);
-                                            });
+                                Promise.all([itemPush, kodePush, trxPush, logPush])
+                                    .then(function () {
+                                        string = encodeURIComponent("1");
                                     }).catch(function (error) {
                                         //logs out the error
                                         string = encodeURIComponent("2");
                                         console.error(error);
                                     });
-                                    num++;
-                                }
+                            }).catch(function (error) {
+                                //logs out the error
+                                string = encodeURIComponent("2");
+                                console.error(error);
                             });
                         }
                     });
+                    num++;
                 }).then(function () {
                     res.redirect('/add-stock?respost=' + string);
                 }).catch(function (error) {
