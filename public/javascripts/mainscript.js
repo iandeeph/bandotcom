@@ -22,44 +22,64 @@ $(document).ready(function() {
     $('.modal').modal();
 
     //================ page add-stock ==================
-    function ifNewKode(){
-        $('select[id^=addStockKode]').change(function(){
-            var value = $(this).val();
-            var parentTR = $(this).closest('tr');
-            var parent = $(this).closest('tr').find('td[id^=inputKodeBlock]');
-            var uniqueNum = $(parent).attr('data');
-            var parentBlock = $(parent).attr('id');
-            if(value == "new"){
-                $('.selectList'+ uniqueNum +'').remove();
-                $('#'+parentBlock).append('<input class="inputListGroup" id="addStockKode-'+ uniqueNum +'" name="listStock['+ uniqueNum +'][kode]" type="text" required>');
-                $(parentTR).find('input[id^=addStockNama]').attr('disabled',false);
-                $(parentTR).find('input[id^=addStockNama]').removeClass('disabled');
-                $(parentTR).find('input[id^=addStockMerek]').attr('disabled',false);
-                $(parentTR).find('input[id^=addStockMerek]').removeClass('disabled');
-                $(parentTR).find('input[id^=addStockJenis]').attr('disabled',false);
-                $(parentTR).find('input[id^=addStockJenis]').removeClass('disabled');
-                $(parentTR).find('textarea[id^=addStockDesc]').attr('disabled',false);
-                $(parentTR).find('textarea[id^=addStockDesc]').removeClass('disabled');
-                $(parentTR).find('textarea[id^=addStockCatatan]').attr('disabled',false);
-                $(parentTR).find('textarea[id^=addStockCatatan]').removeClass('disabled');
-                ifNewKode();
-            }else{
-                $.ajax({
-                    url: './sending-code-content?id='+value,
-                    type: "GET",
-                    dataType: "json",
-                    success: function (datas) {
-                        $(parentTR).find('input[id^=addStockNama]').val(datas[0].nama);
-                        $(parentTR).find('input[id^=addStockMerek]').val(datas[0].merek);
-                        $(parentTR).find('input[id^=addStockJenis]').val(datas[0].jenis);
-                        $(parentTR).find('input[id^=addStockHargabeli]').val(Intl.NumberFormat('en-IND').format(datas[0].hargabeli));
-                        $(parentTR).find('input[id^=addStockHargajual]').val(Intl.NumberFormat('en-IND').format(datas[0].hargajual));
-                        $(parentTR).find('textarea[id^=addStockDesc]').val(datas[0].deskripsi);
-                        $(parentTR).find('textarea[id^=addStockCatatan]').val(datas[0].catatan);
-                    }
+    var submitBtnStock = $('#addStockSubmit');
+    if($(submitBtnStock).length > 0){
+        $.ajax({
+            url: './sending-full-content',
+            type: "GET",
+            dataType: "json",
+            success: function (datas) {
+                for (var keyDatas in datas) {
+                    if (!datas.hasOwnProperty(keyDatas)) continue;
+                    var resDatas = datas[keyDatas];
+                    autocompleteData[resDatas.kode] = null;
+                }
+                $('input.autocompleteStock').autocomplete({
+                    data: autocompleteData
+
                 });
             }
         });
+    }
+    function ifNewKode(){
+        //$('select[id^=addStockKode]').change(function(){
+        //    var value = $(this).val();
+        //    var parentTR = $(this).closest('tr');
+        //    var parent = $(this).closest('tr').find('td[id^=inputKodeBlock]');
+        //    var uniqueNum = $(parent).attr('data');
+        //    var parentBlock = $(parent).attr('id');
+        //
+        //    if(value == "new"){
+        //        $('.selectList'+ uniqueNum +'').remove();
+        //        $('#'+parentBlock).append('<input class="inputListGroup" id="addStockKode-'+ uniqueNum +'" name="listStock['+ uniqueNum +'][kode]" type="text" required>');
+        //        $(parentTR).find('input[id^=addStockNama]').attr('disabled',false);
+        //        $(parentTR).find('input[id^=addStockNama]').removeClass('disabled');
+        //        $(parentTR).find('input[id^=addStockMerek]').attr('disabled',false);
+        //        $(parentTR).find('input[id^=addStockMerek]').removeClass('disabled');
+        //        $(parentTR).find('input[id^=addStockJenis]').attr('disabled',false);
+        //        $(parentTR).find('input[id^=addStockJenis]').removeClass('disabled');
+        //        $(parentTR).find('textarea[id^=addStockDesc]').attr('disabled',false);
+        //        $(parentTR).find('textarea[id^=addStockDesc]').removeClass('disabled');
+        //        $(parentTR).find('textarea[id^=addStockCatatan]').attr('disabled',false);
+        //        $(parentTR).find('textarea[id^=addStockCatatan]').removeClass('disabled');
+        //        ifNewKode();
+        //    }else{
+        //        $.ajax({
+        //            url: './sending-code-content?id='+value,
+        //            type: "GET",
+        //            dataType: "json",
+        //            success: function (datas) {
+        //                $(parentTR).find('input[id^=addStockNama]').val(datas[0].nama);
+        //                $(parentTR).find('input[id^=addStockMerek]').val(datas[0].merek);
+        //                $(parentTR).find('input[id^=addStockJenis]').val(datas[0].jenis);
+        //                $(parentTR).find('input[id^=addStockHargabeli]').val(Intl.NumberFormat('en-IND').format(datas[0].hargabeli));
+        //                $(parentTR).find('input[id^=addStockHargajual]').val(Intl.NumberFormat('en-IND').format(datas[0].hargajual));
+        //                $(parentTR).find('textarea[id^=addStockDesc]').val(datas[0].deskripsi);
+        //                $(parentTR).find('textarea[id^=addStockCatatan]').val(datas[0].catatan);
+        //            }
+        //        });
+        //    }
+        //});
 
         $('input[id^=addStockKode]').change(function(){
             var value = $(this).val();
@@ -69,7 +89,7 @@ $(document).ready(function() {
                 type: "GET",
                 dataType: "json",
                 success: function (datas) {
-                    if(datas.length != 0){
+                    if(datas.length > 0){
                         $(parentTR).find('input[id^=addStockNama]').val(datas[0].nama);
                         $(parentTR).find('input[id^=addStockMerek]').val(datas[0].merek);
                         $(parentTR).find('input[id^=addStockJenis]').val(datas[0].jenis);
@@ -77,36 +97,10 @@ $(document).ready(function() {
                         $(parentTR).find('input[id^=addStockHargajual]').val(Intl.NumberFormat('en-IND').format(datas[0].hargajual));
                         $(parentTR).find('textarea[id^=addStockDesc]').val(datas[0].deskripsi);
                         $(parentTR).find('textarea[id^=addStockCatatan]').val(datas[0].catatan);
-                        $(parentTR).find('input[id^=addStockNama]').attr('disabled',true);
-                        $(parentTR).find('input[id^=addStockNama]').addClass('disabled');
-                        $(parentTR).find('input[id^=addStockJenis]').attr('disabled',true);
-                        $(parentTR).find('input[id^=addStockJenis]').addClass('disabled');
-                        $(parentTR).find('textarea[id^=addStockDesc]').attr('disabled',true);
-                        $(parentTR).find('textarea[id^=addStockDesc]').addClass('disabled');
-                        $(parentTR).find('textarea[id^=addStockCatatan]').attr('disabled',true);
-                        $(parentTR).find('textarea[id^=addStockCatatan]').addClass('disabled');
-                        $(parentTR).closest('form').find('button[id^=addCodeSubmit]').attr('disabled',true);
-                        $(parentTR).closest('form').find('button[id^=addCodeSubmit]').addClass('disabled');
+                        $(parentTR).find('input[id^=addStockMerek], input[id^=addStockNama], input[id^=addStockJenis], textarea[id^=addStockDesc], textarea[id^=addStockCatatan]').attr('disabled',true).addClass('disabled');
                     }else{
-                        $(parentTR).find('input[id^=addStockNama]').val('');
-                        $(parentTR).find('input[id^=addStockMerek]').val('');
-                        $(parentTR).find('input[id^=addStockJenis]').val('');
-                        $(parentTR).find('input[id^=addStockHargabeli]').val('');
-                        $(parentTR).find('input[id^=addStockHargajual]').val('');
-                        $(parentTR).find('textarea[id^=addStockDesc]').val('');
-                        $(parentTR).find('textarea[id^=addStockCatatan]').val('');
-                        $(parentTR).find('input[id^=addStockNama]').attr('disabled',false);
-                        $(parentTR).find('input[id^=addStockNama]').removeClass('disabled');
-                        $(parentTR).find('input[id^=addStockMerek]').attr('disabled',false);
-                        $(parentTR).find('input[id^=addStockMerek]').removeClass('disabled');
-                        $(parentTR).find('input[id^=addStockJenis]').attr('disabled',false);
-                        $(parentTR).find('input[id^=addStockJenis]').removeClass('disabled');
-                        $(parentTR).find('textarea[id^=addStockDesc]').attr('disabled',false);
-                        $(parentTR).find('textarea[id^=addStockDesc]').removeClass('disabled');
-                        $(parentTR).find('textarea[id^=addStockCatatan]').attr('disabled',false);
-                        $(parentTR).find('textarea[id^=addStockCatatan]').removeClass('disabled');
-                        $(parentTR).closest('form').find('button[id^=addCodeSubmit]').attr('disabled',false);
-                        $(parentTR).closest('form').find('button[id^=addCodeSubmit]').removeClass('disabled');
+                        $(parentTR).find('input[id^=addStockNama], input[id^=addStockMerek], input[id^=addStockJenis], input[id^=addStockHargabeli], input[id^=addStockHargajual], textarea[id^=addStockDesc], textarea[id^=addStockCatatan]').val('');
+                        $(parentTR).find('input[id^=addStockMerek], input[id^=addStockNama], input[id^=addStockJenis], textarea[id^=addStockDesc], textarea[id^=addStockCatatan]').attr('disabled',false).removeClass('disabled');
                     }
                 }
             });
@@ -122,28 +116,16 @@ $(document).ready(function() {
 
     ifNewKode();
     $("#btnAddRow").click(function () {
-        var optionsKode = [];
         $.ajax({
-            url: './sending-code',
+            url: './sending-full-content',
             type: "GET",
             dataType: "json",
             success: function (datas) {
-                for (var keysKode in datas) {
-                    if (!datas.hasOwnProperty(keysKode)) continue;
-                    var resKode = datas[keysKode];
-                    optionsKode.push('<option value="' + resKode.idkode + '">' + resKode.kode + '</option>');
-                }
 
                 var appendText = '' +
                     '<tr class="addedRow'+ numFieldTrx +'">' +
                     '<td data="'+ numFieldTrx +'" id="inputKodeBlock'+ numFieldTrx +'">' +
-                    '<select class="inputListGroup selectList'+ numFieldTrx +'" id="addStockKode-'+ numFieldTrx +'" name="listStock['+ numFieldTrx +'][kode]" required>' +
-                    '<option value="" disabled selected>Pilih Kode</option>' +
-                    '<option value="new">Tambah baru (+)</option>' +
-                    optionsKode +
-                    '<option value="new">Tambah baru (+)</option>' +
-                    '</select>' +
-                    '</td>' +
+                    '<input class="inputListGroup autocompleteStock-'+ numFieldTrx +'" id="addStockKode-1" name="listStock[1][kode]" type="text" required></td>' +
                     '<td><input class="inputListGroup disabled" id="addStockMerek-'+ numFieldTrx +'" name="listStock['+ numFieldTrx +'][merek]" type="text" disabled></td>' +
                     '<td><input class="inputListGroup disabled" id="addStockNama-'+ numFieldTrx +'" name="listStock['+ numFieldTrx +'][nama]" type="text" disabled></td>' +
                     '<td><input class="inputListGroup disabled" id="addStockJenis-'+ numFieldTrx +'" name="listStock['+ numFieldTrx +'][jenis]" type="text" disabled></td>' +
@@ -156,6 +138,15 @@ $(document).ready(function() {
                     '</tr>' +
                     '';
                 $("#addStockBlock").append(appendText);
+                for (var keyDatas in datas) {
+                    if (!datas.hasOwnProperty(keyDatas)) continue;
+                    var resDatas = datas[keyDatas];
+                    autocompleteData[resDatas.kode] = null;
+                }
+                $('input.autocompleteStock-'+ numFieldTrx).autocomplete({
+                    data: autocompleteData
+
+                });
                 $("select").material_select();
                 numFieldTrx++;
 
@@ -205,8 +196,7 @@ $(document).ready(function() {
             }
         });
     });
-    //================ page add-stock end ==================
-    //================ page add-code start ==================
+
     function trxPageFunc (){
         $('input[id^=trxKode]').change(function(){
             var value = $(this).val();

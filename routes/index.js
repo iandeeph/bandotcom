@@ -467,7 +467,9 @@ router.post('/add-stock', function(req, res) {
                                     });
 
                                     findMaxIdKodePromise.then(function (resMaxId) {
-                                        var newIdKode = (parseInt(resMaxId.idkode) + num);
+                                        console.log(resMaxId);
+                                        var maxID = resMaxId.idkode || 0;
+                                        var newIdKode = (parseInt(maxID) + num);
                                         console.log(newIdKode);
                                         var queryKodeString = "INSERT INTO bengkelb_bandotcom.tb_kode (idkode, kode, nama, merek, jenis, deskripsi, catatan) VALUES " +
                                             "('" + newIdKode + "', '" + listStock.kode + "', '" + listStock.nama + "', '" + listStock.merek + "', '" + listStock.jenis + "', '" + listStock.deskripsi + "', '" + listStock.catatan + "')";
@@ -503,6 +505,10 @@ router.post('/add-stock', function(req, res) {
                                                 string = encodeURIComponent("2");
                                                 console.error(error);
                                             });
+                                    }).catch(function (error) {
+                                        //logs out the error
+                                        string = encodeURIComponent("2");
+                                        console.error(error);
                                     });
                                     num++;
                                 }
