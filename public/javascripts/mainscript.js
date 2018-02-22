@@ -125,7 +125,7 @@ $(document).ready(function() {
                 var appendText = '' +
                     '<tr class="addedRow'+ numFieldTrx +'">' +
                     '<td data="'+ numFieldTrx +'" id="inputKodeBlock'+ numFieldTrx +'">' +
-                    '<input class="inputListGroup autocompleteStock-'+ numFieldTrx +'" id="addStockKode-1" name="listStock[1][kode]" type="text" required></td>' +
+                    '<input class="inputListGroup autocompleteStock-'+ numFieldTrx +'" id="addStockKode-1" name="listStock['+ numFieldTrx +'][kode]" type="text" required></td>' +
                     '<td><input class="inputListGroup disabled" id="addStockMerek-'+ numFieldTrx +'" name="listStock['+ numFieldTrx +'][merek]" type="text" disabled></td>' +
                     '<td><input class="inputListGroup disabled" id="addStockNama-'+ numFieldTrx +'" name="listStock['+ numFieldTrx +'][nama]" type="text" disabled></td>' +
                     '<td><input class="inputListGroup disabled" id="addStockJenis-'+ numFieldTrx +'" name="listStock['+ numFieldTrx +'][jenis]" type="text" disabled></td>' +

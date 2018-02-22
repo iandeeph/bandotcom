@@ -379,6 +379,7 @@ router.post('/add-stock', function(req, res) {
             "order by tb_kode.kode")
             .then(function (rows) {
                 return Promise.each(lists, function (listStock) {
+                    //console.log(listStock);
                     var cekNamakodePromise = new Promise(function (resolve, reject) {
                         resolve(_.find(rows, {'kode': parseInt(listStock.kode)}));
                     });
@@ -428,10 +429,9 @@ router.post('/add-stock', function(req, res) {
                             });
 
                             findMaxIdKodePromise.then(function (resMaxId) {
-                                console.log(resMaxId);
                                 var maxID = (_.isUndefined(resMaxId))? 0 : resMaxId.idkode;
                                 var newIdKode = (parseInt(maxID) + num);
-                                console.log(newIdKode);
+                                //console.log(newIdKode);
                                 var queryKodeString = "INSERT INTO bengkelb_bandotcom.tb_kode (idkode, kode, nama, merek, jenis, deskripsi, catatan) VALUES " +
                                     "('" + newIdKode + "', '" + listStock.kode + "', '" + listStock.nama + "', '" + listStock.merek + "', '" + listStock.jenis + "', '" + listStock.deskripsi + "', '" + listStock.catatan + "')";
                                 var queryItemString = "INSERT INTO bengkelb_bandotcom.tb_item (idkode, hargabeli, hargajual, jumlah) VALUES " +
@@ -472,8 +472,8 @@ router.post('/add-stock', function(req, res) {
                                 console.error(error);
                             });
                         }
+                        num++;
                     });
-                    num++;
                 }).then(function () {
                     res.redirect('/add-stock?respost=' + string);
                 }).catch(function (error) {
