@@ -384,6 +384,10 @@ router.post('/add-stock', function(req, res) {
                     });
 
                     cekNamakodePromise.then(function (resRows) {
+                        var hargaBeli = parseInt(listStock.hargabeli.replace(/[^0-9]/gi, ''));
+                        var hargaJual = parseInt(listStock.hargajual.replace(/[^0-9]/gi, ''));
+                        var jumlah = parseInt(listStock.jumlah.replace(/[^0-9]/gi, ''));
+                        var total;
                         if (!_.isEmpty(resRows) || !_.isUndefined(resRows)) {
                             total = (parseInt(listStock.jumlah.replace(/[^0-9]/gi, '')) + parseInt(resRows.jumlah));
                             //KALO NAMA KODE SUDAH ADA
